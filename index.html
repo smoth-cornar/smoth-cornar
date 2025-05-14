@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Smooth Corner - ছবি আপলোড করুন এবং কর্নার রাউন্ড করুন | এক ক্লিকে ডাউনলোড করুন"/>
+  <title>Smooth Corner - কর্নার রাউন্ডার টুল</title>
+  <link href="https://fonts.googleapis.com/css2?family=SolaimanLipi&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'SolaimanLipi', sans-serif;
+      background: linear-gradient(to right, #833ab4, #fd1d1d, #fcb045);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 10px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      max-width: 600px;
+      width: 100%;
+      backdrop-filter: blur(10px);
+      animation: fadeIn 1s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+
+    label {
+      display: block;
+      font-size: 1.2em;
+      margin-bottom: 8px;
+    }
+
+    .upload-box {
+      border: 2px dashed #fff;
+      padding: 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+      background: rgba(255, 255, 255, 0.05);
+      transition: 0.3s;
+    }
+
+    .upload-box:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .upload-box input {
+      display: none;
+    }
+
+    .upload-icon {
+      font-size: 50px;
+      margin-bottom: 10px;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .slider {
+      margin: 20px 0;
+    }
+
+    img#preview {
+      width: 100%;
+      border-radius: 0px;
+      margin-top: 15px;
+      max-height: 300px;
+      object-fit: cover;
+      transition: border-radius 0.3s;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 1em;
+      background: white;
+      color: #833ab4;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #fcb045;
+      color: white;
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 0.9em;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📷 Smooth Corner</h1>
+    <p>আপনার ছবি আপলোড করুন ও কর্নার রাউন্ড করে ডাউনলোড করুন!</p>
+
+    <label class="upload-box">
+      <div class="upload-icon">📤</div>
+      <div>ছবি আপলোড করতে এখানে ক্লিক করুন</div>
+      <input type="file" id="fileInput" accept="image/*" />
+    </label>
+
+    <div class="slider">
+      <label for="radiusRange">রাউন্ড লেভেল:</label>
+      <input type="range" id="radiusRange" min="0" max="150" value="0"/>
+    </div>
+
+    <div class="preview-box" style="margin-top:15px;">
+      <img id="preview" src="" alt="প্রিভিউ ইমেজ" />
+    </div>
+
+    <button onclick="downloadImage()">✅ ডাউনলোড করুন</button>
+  </div>
+
+  <footer>
+    © ২০২৫ Smooth Corner | ডিজাইন: আপনার নাম
+  </footer>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const preview = document.getElementById('preview');
+    const radiusRange = document.getElementById('radiusRange');
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        preview.src = event.target.result;
+        preview.style.display = 'block';
+        updateCornerRadius();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    radiusRange.addEventListener('input', updateCornerRadius);
+
+    function updateCornerRadius() {
+      preview.style.borderRadius = radiusRange.value + 'px';
+    }
+
+    function downloadImage() {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        context.save();
+        let radius = parseInt(radiusRange.value);
+        context.beginPath();
+        context.moveTo(radius, 0);
+        context.lineTo(canvas.width - radius, 0);
+        context.quadraticCurveTo(canvas.width, 0, canvas.width, radius);
+        context.lineTo(canvas.width, canvas.height - radius);
+        context.quadraticCurveTo(canvas.width, canvas.height, canvas.width - radius, canvas.height);
+        context.lineTo(radius, canvas.height);
+        context.quadraticCurveTo(0, canvas.height, 0, canvas.height - radius);
+        context.lineTo(0, radius);
+        context.quadraticCurveTo(0, 0, radius, 0);
+        context.closePath();
+        context.clip();
+        context.drawImage(img, 0, 0);
+        context.restore();
+
+        const link = document.createElement('a');
+        link.download = 'rounded-corner.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      };
+      img.src = preview.src;
+    }
+  </script>
+</body>
+</html>
